@@ -7,18 +7,22 @@ const fs = require('fs');
 // const magnitude = 10; // how far should lines deviate from center for a given level of darkness
 const rowMagnitude = 16;
 const colMagnitude = 1;
-
 // what is the spacing between cols or rows (make a line out of every nth col or row of pixels)
 const rowLineFreq = 16;
 const colLineFreq = 64;
-
 // how often should we sample a pixel to build our path?
 const rowSamplingFreq = 4;
 const colSamplingFreq = 6;
 
+const rowBaseRGB = '255,255,255';
+const colBaseRGB = '0,0,255';
+
+const glowSize = 15;
+const bgColor = 'rgba(0,0,0,1)';
 const scale = 1.5;
 
 for (let i = 1; i < 126; i++) {
+  // path to the source images
   fs.readFile(`${__dirname}/srcImg/out${padNumber(i)}.png`, (err, image) => {
     if (err) console.log(err);
 
@@ -36,10 +40,11 @@ for (let i = 1; i < 126; i++) {
 function makeImage(i, pxData, width, height) {
   const canvas = new Canvas(width, height);
   const ctx = canvas.getContext('2d');
-  ctx.fillStyle = 'rgba(0,0,0,1)';
+  ctx.fillStyle = bgColor;
   ctx.fillRect(0, 0, width, height);
 
   drawLines(ctx, pxData, i);
+  // path to output images to
   const out = fs.createWriteStream(`img/${padNumber(i)}.png`);
   const stream = canvas.pngStream();
   stream.on('data', chunk => { out.write(chunk) });
@@ -86,8 +91,7 @@ function drawLines(ctx, { rows, cols }, i) {
 
 function drawPathFromPoints(ctx, points, fixedCoord, isRow, magnitude) {
   let dir = -1;
-  // const baseColor = '255,255,255';
-  const baseColor = isRow ? '255,255,255' : '0,0,255';
+  const baseColor = isRow ? rowBaseRGB : colBaseRGB;
 
   // flag for whether (if false) next passing command should get added to new obj with fresh array, tracking movingCoord as start val (in moveTo command)
   // (if true) next passing command gets tacked onto array of last obj in array
@@ -133,11 +137,11 @@ function drawPathFromPoints(ctx, points, fixedCoord, isRow, magnitude) {
 
   paths.forEach(path => renderLine(ctx, path, fixedCoord, isRow, baseColor, 1, 0));
 
-  // this provides the glow
-  // what i increments to should be variable. starting opacity should be variable. lowest opacity should always be +/- the same
+  // this is the GLOW
   if (!isRow) {
-    for (let i = -15; i <= 15; i++) {
-      paths.forEach(path => renderLine(ctx, path, fixedCoord, isRow, baseColor, 0.5 - (( 0.5 - ((15 - (Math.abs(i))) / 15)) * 0.5), i));
+    for (let i = -glowSize; i <= glowSize; i++) {
+      const opacity = 0.5 - (( 0.5 - ((glowSize - (Math.abs(i))) / glowSize)) * 0.5);
+      paths.forEach(path => renderLine(ctx, path, fixedCoord, isRow, baseColor, opacity, i));
     }
   }
 }
