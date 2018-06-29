@@ -5,17 +5,18 @@ const Image = Canvas.Image;
 const fs = require('fs');
 
 // const amplitude = 10; // how far should lines deviate from center for a given level of darkness
-const rowAmplitude = 16;
-const colAmplitude = 1;
+const rowAmplitude = 6;
+const colAmplitude = 6;
 // what is the spacing between cols or rows (make a line out of every nth col or row of pixels)
-const rowLineFreq = 16;
-const colLineFreq = 64;
+const rowLineFreq = 6;
+const colLineFreq = 6;
 // how often should we sample a pixel to build our path?
-const rowSamplingFreq = 4;
+const rowSamplingFreq = 6;
 const colSamplingFreq = 6;
 
 const rowBaseRGB = '255,255,255';
-const colBaseRGB = '0,0,255';
+const colBaseRGB = '255,255,255';
+// const colBaseRGB = '0,0,255';
 
 const glowSize = 15;
 const bgColor = 'rgba(0,0,0,1)';
@@ -103,7 +104,7 @@ function drawPathFromPoints(ctx, points, fixedCoord, isRow, amplitude) {
 
       if (!movingCoord || !(movingCoord % samplingFreq)) {
         // if the value doesn't pass our threshold, return
-        if (/*isRow && pt < 0.2 || */!isRow && pt > 0.2) {
+        if (/*isRow && pt < 0.2 || */!isRow && pt < 0.2) {
           isBuildingCmd = false;
           return paths;
         }
@@ -119,16 +120,11 @@ function drawPathFromPoints(ctx, points, fixedCoord, isRow, amplitude) {
         if (nextMoving > pts.length - 1) nextMoving = pts.length - 1;
         const nextAdjusted = fixedCoord + (dir * pts[nextMoving] * amplitude * -1);
         const movingMid = movingCoord + (samplingFreq / 2);
-        const adjustedMid = (adjustedCoord + nextAdjusted) / 2;
-        const movingCP1= ((movingMid + movingCoord) / 2);
-        const adjustedCP1 = ((adjustedMid + adjustedCoord) / 2);
-        const movingCP2 = ((movingMid + nextMoving) / 2);
-        const adjustedCP2 = ((adjustedMid + nextAdjusted) / 2);
 
         if (isRow) {
-          paths[paths.length - 1].cmds.push([movingCP1, adjustedCP1, movingCP2, adjustedCP2, nextMoving, nextAdjusted]);
+          paths[paths.length - 1].cmds.push([movingMid, adjustedCoord, movingMid, nextAdjusted, nextMoving, nextAdjusted]);
         } else {
-          paths[paths.length - 1].cmds.push([adjustedCP1, movingCP1, adjustedCP2, movingCP2, nextAdjusted, nextMoving]);
+          paths[paths.length - 1].cmds.push([adjustedCoord, movingMid, nextAdjusted, movingMid, nextAdjusted, nextMoving]);
         }
       }
 
@@ -138,12 +134,12 @@ function drawPathFromPoints(ctx, points, fixedCoord, isRow, amplitude) {
   paths.forEach(path => renderLine(ctx, path, fixedCoord, isRow, baseColor, 1, 0));
 
   // this is the GLOW
-  if (!isRow) {
-    for (let i = -glowSize; i <= glowSize; i++) {
-      const opacity = 0.5 - (( 0.5 - ((glowSize - (Math.abs(i))) / glowSize)) * 0.5);
-      paths.forEach(path => renderLine(ctx, path, fixedCoord, isRow, baseColor, opacity, i));
-    }
-  }
+  // if (!isRow) {
+  //   for (let i = -glowSize; i <= glowSize; i++) {
+  //     const opacity = 0.5 - (( 0.5 - ((glowSize - (Math.abs(i))) / glowSize)) * 0.5);
+  //     paths.forEach(path => renderLine(ctx, path, fixedCoord, isRow, baseColor, opacity, i));
+  //   }
+  // }
 }
 
 function renderLine(ctx, path, fixedCoord, isRow, baseColor, opacity, translation) {
@@ -153,12 +149,12 @@ function renderLine(ctx, path, fixedCoord, isRow, baseColor, opacity, translatio
   if (isRow) {
     ctx.translate(0, translation);
     ctx.moveTo(path.startVal, fixedCoord);
-    path.cmds.forEach(cmd => ctx.quadraticCurveTo.apply(ctx, cmd));
+    path.cmds.forEach(cmd => ctx.bezierCurveTo.apply(ctx, cmd));
     ctx.translate(0, -translation);
   } else {
     ctx.translate(translation, 0);
     ctx.moveTo(fixedCoord, path.startVal);
-    path.cmds.forEach(cmd => ctx.quadraticCurveTo.apply(ctx, cmd));
+    path.cmds.forEach(cmd => ctx.bezierCurveTo.apply(ctx, cmd));
     ctx.translate(-translation, 0);
   }
 
