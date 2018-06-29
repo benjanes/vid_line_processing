@@ -18,7 +18,7 @@ const rowBaseRGB = '255,255,255';
 const colBaseRGB = '255,255,255';
 // const colBaseRGB = '0,0,255';
 
-const glowSize = 4;
+const glowSize = 8;
 const bgColor = 'rgba(0,0,0,1)';
 // const bgColor = 'rgba(255,255,255,1)';
 const scale = 1.5;
@@ -130,17 +130,18 @@ function drawPathFromPoints(ctx, points, fixedCoord, isRow, amplitude) {
   paths.forEach(path => renderLine(ctx, path, fixedCoord, isRow, baseColor, 1, 0));
 
   // this is the GLOW
-  if (!isRow) {
+  // if (!isRow) {
     for (let i = -glowSize; i <= glowSize; i++) {
       const opacity = 0.5 - (( 0.5 - ((glowSize - (Math.abs(i))) / glowSize)) * 0.5);
       paths.forEach(path => renderLine(ctx, path, fixedCoord, isRow, baseColor, opacity, i));
     }
-  }
+  // }
 }
 
 function renderLine(ctx, path, fixedCoord, isRow, baseColor, opacity, translation) {
   const { r, g, b } = path.rgb;
-  ctx.strokeStyle = `rgba(${r},${g},${b},1)`;
+  ctx.strokeStyle = `rgba(${r},${g},${b},${opacity})`;
+  // if (isRow) ctx.strokeStyle = `rgba(255,0,0,${opacity})`;
   // ctx.strokeStyle = `rgba(${baseColor},${opacity})`;
   ctx.beginPath();
 
