@@ -4,9 +4,9 @@ const Canvas = require('canvas');
 const Image = Canvas.Image;
 const fs = require('fs');
 
-// const magnitude = 10; // how far should lines deviate from center for a given level of darkness
-const rowMagnitude = 16;
-const colMagnitude = 1;
+// const amplitude = 10; // how far should lines deviate from center for a given level of darkness
+const rowAmplitude = 16;
+const colAmplitude = 1;
 // what is the spacing between cols or rows (make a line out of every nth col or row of pixels)
 const rowLineFreq = 16;
 const colLineFreq = 64;
@@ -82,14 +82,14 @@ function transformData(canvas, data) {
 
 function drawLines(ctx, { rows, cols }, i) {
   rows.forEach((row, y) => {
-    if (!y || !((y) % rowLineFreq)) drawPathFromPoints(ctx, row, y, true, rowMagnitude);
+    if (!y || !((y) % rowLineFreq)) drawPathFromPoints(ctx, row, y, true, rowAmplitude);
   });
   cols.forEach((col, x) => {
-    if (!x || !((x) % colLineFreq)) drawPathFromPoints(ctx, col, x, false, colMagnitude);
+    if (!x || !((x) % colLineFreq)) drawPathFromPoints(ctx, col, x, false, colAmplitude);
   });
 }
 
-function drawPathFromPoints(ctx, points, fixedCoord, isRow, magnitude) {
+function drawPathFromPoints(ctx, points, fixedCoord, isRow, amplitude) {
   let dir = -1;
   const baseColor = isRow ? rowBaseRGB : colBaseRGB;
 
@@ -114,10 +114,10 @@ function drawPathFromPoints(ctx, points, fixedCoord, isRow, magnitude) {
         }
 
         dir *= -1;
-        const adjustedCoord = fixedCoord + (dir * pt * magnitude);
+        const adjustedCoord = fixedCoord + (dir * pt * amplitude);
         let nextMoving = movingCoord + samplingFreq;
         if (nextMoving > pts.length - 1) nextMoving = pts.length - 1;
-        const nextAdjusted = fixedCoord + (dir * pts[nextMoving] * magnitude * -1);
+        const nextAdjusted = fixedCoord + (dir * pts[nextMoving] * amplitude * -1);
         const movingMid = movingCoord + (samplingFreq / 2);
         const adjustedMid = (adjustedCoord + nextAdjusted) / 2;
         const movingCP1= ((movingMid + movingCoord) / 2);
