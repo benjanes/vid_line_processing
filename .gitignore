@@ -1,7 +1,5 @@
 .DS_Store
 node_modules
-srcImg
-img
-outputs
-title_vids
-title.m4v
+src
+in_img
+out_img

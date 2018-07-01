@@ -6,21 +6,21 @@ const fs = require('fs');
 
 // const amplitude = 10; // how far should lines deviate from center for a given level of darkness
 const rowAmplitude = 8;
-const colAmplitude = 8;
+const colAmplitude = 0;
 // what is the spacing between cols or rows (make a line out of every nth col or row of pixels)
-const rowLineFreq = 16;
-const colLineFreq = 16;
+const rowLineFreq = 4;
+const colLineFreq = 40;
 // how often should we sample a pixel to build our path?
-const rowSamplingFreq = 16;
-const colSamplingFreq = 16;
+const rowSamplingFreq = 4;
+const colSamplingFreq = 4;
 
 const rowBaseRGB = '255,255,255';
 const colBaseRGB = '255,255,255';
 // const colBaseRGB = '0,0,255';
 
-const glowSize = 8;
+const glowSize = 19;
+// const bgColor = 'rgba(200,200,200,1)';
 const bgColor = 'rgba(0,0,0,1)';
-// const bgColor = 'rgba(255,255,255,1)';
 const scale = 1.5;
 
 for (let i = 1; i < 126; i++) {
@@ -105,10 +105,10 @@ function drawPathFromPoints(ctx, points, fixedCoord, isRow, amplitude) {
 
       if (!movingCoord || !(movingCoord % samplingFreq)) {
         // if the value doesn't pass our threshold, return
-        // if (/*isRow && pt < 0.2 || */!isRow && pt.cellValue < 0.2) {
-        //   // isBuildingCmd = false;
-        //   return paths;
-        // }
+        if ((isRow && pt.cellValue < 0.06) || (!isRow && pt.cellValue > 0.08)) {
+          // isBuildingCmd = false;
+          return paths;
+        }
 
         dir *= -1;
         const adjustedCoord = fixedCoord + (dir * pt.cellValue * amplitude);
@@ -130,18 +130,25 @@ function drawPathFromPoints(ctx, points, fixedCoord, isRow, amplitude) {
   paths.forEach(path => renderLine(ctx, path, fixedCoord, isRow, baseColor, 1, 0));
 
   // this is the GLOW
-  // if (!isRow) {
+  if (!isRow) {
     for (let i = -glowSize; i <= glowSize; i++) {
       const opacity = 0.5 - (( 0.5 - ((glowSize - (Math.abs(i))) / glowSize)) * 0.5);
       paths.forEach(path => renderLine(ctx, path, fixedCoord, isRow, baseColor, opacity, i));
     }
+  }
+
+  // if (!isRow) {
+  //   for (let i = -glowSize; i <= glowSize; i++) {
+  //     const opacity = 1 - (( 0.5 - ((glowSize - (Math.abs(i))) / glowSize)) * 0.5);
+  //     paths.forEach(path => renderLine(ctx, path, fixedCoord, isRow, baseColor, opacity, i));
+  //   }
   // }
 }
 
 function renderLine(ctx, path, fixedCoord, isRow, baseColor, opacity, translation) {
   const { r, g, b } = path.rgb;
   ctx.strokeStyle = `rgba(${r},${g},${b},${opacity})`;
-  // if (isRow) ctx.strokeStyle = `rgba(255,0,0,${opacity})`;
+  if (!isRow) ctx.strokeStyle = `rgba(0,0,255,${opacity})`;
   // ctx.strokeStyle = `rgba(${baseColor},${opacity})`;
   ctx.beginPath();
 
