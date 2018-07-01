@@ -23,9 +23,8 @@ const glowSize = 19;
 const bgColor = 'rgba(0,0,0,1)';
 const scale = 1.5;
 
-for (let i = 1; i < 126; i++) {
-  // path to the source images
-  fs.readFile(`${__dirname}/srcImg/out${padNumber(i)}.png`, (err, image) => {
+module.exports = (pathIn, pathOut) => {
+  fs.readFile(pathIn, (err, image) => {
     if (err) console.log(err);
 
     const img = new Image();
@@ -35,19 +34,19 @@ for (let i = 1; i < 126; i++) {
 
     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
     const pxData = transformData(canvas, ctx.getImageData(0, 0, canvas.width, canvas.height).data);
-    makeImage(i, pxData, canvas.width, canvas.height);
+    makeImage(pxData, canvas.width, canvas.height, pathOut);
   });
-}
+};
 
-function makeImage(i, pxData, width, height) {
+function makeImage(pxData, width, height, path) {
   const canvas = new Canvas(width, height);
   const ctx = canvas.getContext('2d');
   ctx.fillStyle = bgColor;
   ctx.fillRect(0, 0, width, height);
 
-  drawLines(ctx, pxData, i);
+  drawLines(ctx, pxData);
   // path to output images to
-  const out = fs.createWriteStream(`img/${padNumber(i)}.png`);
+  const out = fs.createWriteStream(path);
   const stream = canvas.pngStream();
   stream.on('data', chunk => { out.write(chunk) });
 }
@@ -82,7 +81,7 @@ function transformData(canvas, data) {
   return { rows, cols };
 }
 
-function drawLines(ctx, { rows, cols }, i) {
+function drawLines(ctx, { rows, cols }) {
   rows.forEach((row, y) => {
     if (!y || !((y) % rowLineFreq)) drawPathFromPoints(ctx, row, y, true, rowAmplitude);
   });
@@ -166,12 +165,4 @@ function renderLine(ctx, path, fixedCoord, isRow, baseColor, opacity, translatio
 
   ctx.stroke();
   ctx.closePath();
-}
-
-function padNumber(number) {
-  let n = number.toString();
-  while (n.length < 3) {
-    n = `0${n}`;
-  }
-  return n;
 }
