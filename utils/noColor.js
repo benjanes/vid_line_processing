@@ -1,31 +1,34 @@
 // ffmpeg -r 5 -i img/%03d.png -vcodec h264 -pix_fmt yuv420p -crf 22 -s 1480x1640 color.mp4
-// ffmpeg -r 25 -i img/%03d.png -vcodec h264 -pix_fmt yuv420p -crf 22 -s 2880x1620 title11.mp4
+// ffmpeg -r 25 -i out_img/%03d.png -vcodec h264 -pix_fmt yuv420p -crf 22 -s 2880x1620 title11.mp4
 const Canvas = require('canvas');
 const Image = Canvas.Image;
 const fs = require('fs');
 
 // const amplitude = 10; // how far should lines deviate from center for a given level of darkness
-const rowAmplitude = 6;
-const colAmplitude = 6;
+// const rowAmplitude = 2;
+const colAmplitude = 2;
 // what is the spacing between cols or rows (make a line out of every nth col or row of pixels)
-const rowLineFreq = 6;
-const colLineFreq = 6;
+const rowLineFreq = 8;
+const colLineFreq = 4;
 // how often should we sample a pixel to build our path?
-const rowSamplingFreq = 6;
-const colSamplingFreq = 6;
+const rowSamplingFreq = 8;
+const colSamplingFreq = 4;
 
 const rowBaseRGB = '255,255,255';
 const colBaseRGB = '255,255,255';
 // const colBaseRGB = '0,0,255';
 
 const glowSize = 15;
-const bgColor = 'rgba(0,0,0,1)';
+// red from 100 to 240
+
 const scale = 1.5;
 
-for (let i = 1; i < 126; i++) {
-  // path to the source images
-  fs.readFile(`${__dirname}/srcImg/out${padNumber(i)}.png`, (err, image) => {
+module.exports = (pathIn, pathOut, channel1Peak, channel2Peak) => {
+  fs.readFile(pathIn, (err, image) => {
     if (err) console.log(err);
+
+    const bgColor = `rgba(${Math.round((channel2Peak * 100) + 100)},90,60,1)`;
+    const rowAmplitude = 10 * channel1Peak;
 
     const img = new Image();
     img.src = image;
@@ -34,19 +37,19 @@ for (let i = 1; i < 126; i++) {
 
     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
     const pxData = transformData(canvas, ctx.getImageData(0, 0, canvas.width, canvas.height).data);
-    makeImage(i, pxData, canvas.width, canvas.height);
+    makeImage(pxData, canvas.width, canvas.height, pathOut, bgColor, rowAmplitude);
   });
-}
+};
 
-function makeImage(i, pxData, width, height) {
+function makeImage(pxData, width, height, path, bgColor, rowAmplitude) {
   const canvas = new Canvas(width, height);
   const ctx = canvas.getContext('2d');
   ctx.fillStyle = bgColor;
   ctx.fillRect(0, 0, width, height);
 
-  drawLines(ctx, pxData, i);
+  drawLines(ctx, pxData, rowAmplitude);
   // path to output images to
-  const out = fs.createWriteStream(`img/${padNumber(i)}.png`);
+  const out = fs.createWriteStream(path);
   const stream = canvas.pngStream();
   stream.on('data', chunk => { out.write(chunk) });
 }
@@ -81,7 +84,7 @@ function transformData(canvas, data) {
   return { rows, cols };
 }
 
-function drawLines(ctx, { rows, cols }, i) {
+function drawLines(ctx, { rows, cols }, rowAmplitude) {
   rows.forEach((row, y) => {
     if (!y || !((y) % rowLineFreq)) drawPathFromPoints(ctx, row, y, true, rowAmplitude);
   });
@@ -104,7 +107,7 @@ function drawPathFromPoints(ctx, points, fixedCoord, isRow, amplitude) {
 
       if (!movingCoord || !(movingCoord % samplingFreq)) {
         // if the value doesn't pass our threshold, return
-        if (/*isRow && pt < 0.2 || */!isRow && pt < 0.2) {
+        if (isRow && pt > 0.2 || !isRow && pt < 0.2) {
           isBuildingCmd = false;
           return paths;
         }
