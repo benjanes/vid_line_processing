@@ -5,20 +5,21 @@ const Image = Canvas.Image;
 const fs = require('fs');
 
 // const amplitude = 10; // how far should lines deviate from center for a given level of darkness
-// const rowAmplitude = 2;
+const rowAmplitude = 2;
 const colAmplitude = 2;
+
 // what is the spacing between cols or rows (make a line out of every nth col or row of pixels)
 const rowLineFreq = 8;
-const colLineFreq = 4;
+const colLineFreq = 8;
 // how often should we sample a pixel to build our path?
 const rowSamplingFreq = 8;
-const colSamplingFreq = 4;
+const colSamplingFreq = 20;
 
 const rowBaseRGB = '255,255,255';
 const colBaseRGB = '255,255,255';
 // const colBaseRGB = '0,0,255';
 
-const glowSize = 15;
+const glowSize = 5;
 // red from 100 to 240
 
 const scale = 1.5;
@@ -27,8 +28,10 @@ module.exports = (pathIn, pathOut, channel1Peak, channel2Peak) => {
   fs.readFile(pathIn, (err, image) => {
     if (err) console.log(err);
 
-    const bgColor = `rgba(${Math.round((channel2Peak * 100) + 100)},90,60,1)`;
-    const rowAmplitude = 10 * channel1Peak;
+    const bgColor = `rgba(0,0,0,1)`;
+    // const bgColor = `rgba(${Math.round((channel2Peak * 100) + 100)},90,60,1)`;
+    const rowAmplitude = 4;
+    // const rowAmplitude = 10 * channel1Peak;
 
     const img = new Image();
     img.src = image;
@@ -107,10 +110,10 @@ function drawPathFromPoints(ctx, points, fixedCoord, isRow, amplitude) {
 
       if (!movingCoord || !(movingCoord % samplingFreq)) {
         // if the value doesn't pass our threshold, return
-        if (isRow && pt > 0.2 || !isRow && pt < 0.2) {
-          isBuildingCmd = false;
-          return paths;
-        }
+        // if (isRow && pt > 0.2 || !isRow && pt < 0.2) {
+        //   isBuildingCmd = false;
+        //   return paths;
+        // }
 
         if (!isBuildingCmd) {
           paths.push({ startVal: movingCoord, cmds: [] });
@@ -137,12 +140,12 @@ function drawPathFromPoints(ctx, points, fixedCoord, isRow, amplitude) {
   paths.forEach(path => renderLine(ctx, path, fixedCoord, isRow, baseColor, 1, 0));
 
   // this is the GLOW
-  // if (!isRow) {
-  //   for (let i = -glowSize; i <= glowSize; i++) {
-  //     const opacity = 0.5 - (( 0.5 - ((glowSize - (Math.abs(i))) / glowSize)) * 0.5);
-  //     paths.forEach(path => renderLine(ctx, path, fixedCoord, isRow, baseColor, opacity, i));
-  //   }
-  // }
+  if (!isRow) {
+    for (let i = -glowSize; i <= glowSize; i++) {
+      // const opacity = 0.5 - (( 0.5 - ((glowSize - (Math.abs(i))) / glowSize)) * 0.5);
+      paths.forEach(path => renderLine(ctx, path, fixedCoord, isRow, baseColor, 1, i));
+    }
+  }
 }
 
 function renderLine(ctx, path, fixedCoord, isRow, baseColor, opacity, translation) {

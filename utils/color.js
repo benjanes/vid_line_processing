@@ -5,20 +5,20 @@ const Image = Canvas.Image;
 const fs = require('fs');
 
 // const amplitude = 10; // how far should lines deviate from center for a given level of darkness
-const rowAmplitude = 40;
-const colAmplitude = 0;
+const rowAmplitude = 4;
+const colAmplitude = 10;
 // what is the spacing between cols or rows (make a line out of every nth col or row of pixels)
-const rowLineFreq = 20;
-const colLineFreq = 1;
+const rowLineFreq = 8;
+const colLineFreq = 14;
 // how often should we sample a pixel to build our path?
-const rowSamplingFreq = 20;
-const colSamplingFreq = 2;
+const rowSamplingFreq = 8;
+const colSamplingFreq = 28;
 
 const rowBaseRGB = '255,255,255';
 const colBaseRGB = '255,255,255';
 // const colBaseRGB = '0,0,255';
 
-const glowSize = 19;
+const glowSize = 5;
 // const bgColor = 'rgba(200,200,200,1)';
 const bgColor = 'rgba(255,180,160,1)';
 const scale = 1.5;
@@ -82,9 +82,9 @@ function transformData(canvas, data) {
 }
 
 function drawLines(ctx, { rows, cols }) {
-  rows.forEach((row, y) => {
-    if (!y || !((y) % rowLineFreq)) drawPathFromPoints(ctx, row, y, true, rowAmplitude);
-  });
+  // rows.forEach((row, y) => {
+  //   if (!y || !((y) % rowLineFreq)) drawPathFromPoints(ctx, row, y, true, rowAmplitude);
+  // });
   cols.forEach((col, x) => {
     if (!x || !((x) % colLineFreq)) drawPathFromPoints(ctx, col, x, false, colAmplitude);
   });
@@ -104,10 +104,10 @@ function drawPathFromPoints(ctx, points, fixedCoord, isRow, amplitude) {
 
       if (!movingCoord || !(movingCoord % samplingFreq)) {
         // if the value doesn't pass our threshold, return
-        if ((!isRow && pt.cellValue < 0.15) || (isRow && pt.cellValue > 0.6)) {
-          // isBuildingCmd = false;
-          return paths;
-        }
+        // if ((!isRow && pt.cellValue < 0.15) || (isRow && pt.cellValue > 0.6)) {
+        //   // isBuildingCmd = false;
+        //   return paths;
+        // }
 
         dir *= -1;
         const adjustedCoord = fixedCoord + (dir * pt.cellValue * amplitude);
@@ -136,12 +136,12 @@ function drawPathFromPoints(ctx, points, fixedCoord, isRow, amplitude) {
   //   }
   // }
 
-  // if (!isRow) {
-  //   for (let i = -glowSize; i <= glowSize; i++) {
-  //     const opacity = 1 - (( 0.5 - ((glowSize - (Math.abs(i))) / glowSize)) * 0.5);
-  //     paths.forEach(path => renderLine(ctx, path, fixedCoord, isRow, baseColor, opacity, i));
-  //   }
-  // }
+  if (!isRow) {
+    for (let i = -glowSize; i <= glowSize; i++) {
+      // const opacity = 1 - (( 0.5 - ((glowSize - (Math.abs(i))) / glowSize)) * 0.5);
+      paths.forEach(path => renderLine(ctx, path, fixedCoord, isRow, baseColor, 1, i));
+    }
+  }
 }
 
 function renderLine(ctx, path, fixedCoord, isRow, baseColor, opacity, translation) {
